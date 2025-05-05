@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 
-from alert_service.app.services.alert_handler import AlertService
+from ..services.alert_handler import AlertService
 
 
-alert_router = APIRouter()
+alert_router = APIRouter(prefix="/alert")
 
 
 def get_alert_service():
@@ -15,5 +15,5 @@ async def receive_alert(
     request: Request, alert_service: AlertService = Depends(get_alert_service)
 ):
     data = await request.json()
-    alert_service.send_alert(data)
+    alert_service.handle_alert(data)
     return {"message": "Alert received"}

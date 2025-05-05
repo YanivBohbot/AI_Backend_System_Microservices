@@ -1,7 +1,10 @@
 import asyncio
-from ai_service.app.model import FraudModel
-from ai_service.app.schemas import FraudPredictionRequest, FraudPredictionResponse
-from ...utils.preprocessing import preprocess_input
+from datetime import datetime
+
+from ..model import FraudModel
+from ..schemas import FraudPredictionRequest, FraudPredictionResponse
+
+# from ...utils.preprocessing import preprocess_input
 import httpx
 
 # MODEL_PATH = os.path.join("model_files", "fraud_model.pkl")
@@ -39,12 +42,12 @@ class PredictionService:
         return sum(ord(c) for c in location) % 100
 
     async def notify_alert_service(self, is_fraud: bool, probability: float):
-        if not is_fraud:
-            return
+        # if not is_fraud:
+        #     return
         try:
             async with httpx.AsyncClient() as Client:
                 await Client.post(
-                    "http://alert-service:8003/alert",
+                    "http://localhost:8003/alert/",
                     json={
                         "email": "admin@example.com",
                         "message": f"🚨 Fraudulent transaction detected! is Fraud : {is_fraud}! Probability: {probability:.2f} ",
@@ -57,15 +60,18 @@ class PredictionService:
         self, data: FraudPredictionRequest, is_fraud: bool, probability: float
     ):
         try:
+            log_data = {
+                "timestamp": datetime.utcnow().isoformat(),
+                "service": "ai-service",
+                "event": "prediction",
+                "input": data.dict(),
+                "output": {"is_fraud": is_fraud, "probability": probability},
+                "message": f"Prediction processed successfully with {probability:.2f} probability",
+            }
             async with httpx.AsyncClient() as Client:
                 await Client.post(
-                    "http://log-service:8004/log",
-                    json={
-                        "input": data.dict(),
-                        "is_fraud": is_fraud,
-                        "probability": probability,
-                    },
+                    "http://localhost:8004/logs/",
+                    json=log_data,
                 )
         except Exception as e:
             print("Failed to log prediction:", e)
-
