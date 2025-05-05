@@ -1,7 +1,7 @@
 import datetime
 from fastapi import APIRouter, Depends
 
-from ai_service.app.model import FraudModel
+from ..model import FraudModel
 from ..schemas import FraudPredictionRequest, FraudPredictionResponse
 from ..services.prediction_service import PredictionService
 from ..services.dependencies import get_prediction_service
@@ -20,14 +20,7 @@ async def predict_fraud(
 ):
     return await service.predict(input_data)
 
-    # log_data = {
-    #     "timestamp": datetime.utcnow(),
-    #     "service": "ai-service",
-    #     "event": "prediction",
-    #     "input": input_data.dict(),
-    #     "output": {"is_fraud": bool(result_prediction)},
-    #     "message": "Prediction processed successfully",
-    # }
+
 
     # notify_log_service(log_data)
 

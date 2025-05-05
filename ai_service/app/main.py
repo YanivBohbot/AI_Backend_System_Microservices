@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import prediction_routes
+from .routes import predict_routes
 
 app = FastAPI()
-app.include_router(prediction_routes.router, prefix="/fraud", tags=["Fraud Detection"])
+app.include_router(predict_routes.router, prefix="/fraud", tags=["Fraud Detection"])
