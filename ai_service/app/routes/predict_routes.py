@@ -1,4 +1,3 @@
-import datetime
 from fastapi import APIRouter, Depends
 
 from ..model import FraudModel
@@ -19,16 +18,3 @@ async def predict_fraud(
     service: PredictionService = Depends(get_prediction_service),
 ):
     return await service.predict(input_data)
-
-
-
-    # notify_log_service(log_data)
-
-    # if result_prediction == 1:
-    #     notify_alert_service(
-    #         {
-    #             "message": "Fraudulent transaction detected!",
-    #             "details": FraudPredictionRequest.model_dump(),
-    #         }
-    #     )
-    # return {"isFraud": bool(result_prediction)}

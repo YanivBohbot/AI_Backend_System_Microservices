@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -7,7 +8,8 @@ class FraudPredictionRequest(BaseModel):
     old_balance: float
     new_balance: float
     customer_age: int
-    location: str
+    ip: str
+    location: Optional[str] = None
 
 
 class FraudPredictionResponse(BaseModel):
