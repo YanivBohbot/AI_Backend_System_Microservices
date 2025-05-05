@@ -3,3 +3,7 @@ uvicorn
 pydantic
 httpx
 loguru
+sqlalchemy
+asyncpg
+databases
+boto3
