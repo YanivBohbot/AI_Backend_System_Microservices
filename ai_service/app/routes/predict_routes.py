@@ -1,35 +1,41 @@
+import datetime
 from fastapi import APIRouter, Depends
-import httpx
+
 from ai_service.app.model import FraudModel
 from ..schemas import FraudPredictionRequest, FraudPredictionResponse
 from ..services.prediction_service import PredictionService
+from ..services.dependencies import get_prediction_service
 
 router = APIRouter()
 
-
-def get_service():
-    model = FraudModel()
-    return PredictionService(model)
+# Dependency Injection
+model_instance = FraudModel()
+prediction_service = PredictionService(model_instance)
 
 
 @router.post("/predict", response_model=FraudPredictionResponse)
-def predict_fraud(
-    data: FraudPredictionRequest, service: PredictionService = Depends(get_service)
+async def predict_fraud(
+    input_data: FraudPredictionRequest,
+    service: PredictionService = Depends(get_prediction_service),
 ):
-    result_prediction = service.predict(data)
-    if result_prediction == 1:
-        notify_alert_service(
-            {
-                "message": "Fraudulent transaction detected!",
-                "details": FraudPredictionRequest.model_dump(),
-            }
-        )
-    return {"isFraud": bool(result_prediction)}
+    return await service.predict(input_data)
 
+    # log_data = {
+    #     "timestamp": datetime.utcnow(),
+    #     "service": "ai-service",
+    #     "event": "prediction",
+    #     "input": input_data.dict(),
+    #     "output": {"is_fraud": bool(result_prediction)},
+    #     "message": "Prediction processed successfully",
+    # }
 
-def notify_alert_service(payload: dict):
-    try:
-        response = httpx.post("http://alert-service:8003/alert", json=payload)
-        response.raise_for_status()
-    except httpx.RequestError as exc:
-        print(f"Error calling alert-service: {exc}")
+    # notify_log_service(log_data)
+
+    # if result_prediction == 1:
+    #     notify_alert_service(
+    #         {
+    #             "message": "Fraudulent transaction detected!",
+    #             "details": FraudPredictionRequest.model_dump(),
+    #         }
+    #     )
+    # return {"isFraud": bool(result_prediction)}
