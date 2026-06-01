@@ -1,0 +1,2 @@
+# Place the trained model here as fraud_model.pkl.
+# When absent, FraudModel falls back to mock threshold logic (see app/model.py).

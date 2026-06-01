@@ -23,7 +23,7 @@ class PredictionService:
             try:
                 async with httpx.AsyncClient() as Client:
                     response = await Client.get(
-                        f"http://localhost:8005/geoip/{data.ip}"
+                        f"http://external-api-service:8005/geoip/{data.ip}"
                     )
                     response.raise_for_status()
                     geo_data = response.json()
@@ -32,25 +32,23 @@ class PredictionService:
             except Exception as e:
                 print("[WARNING] GeoIP fetch failed:", e)
 
-            features = [
-                data.amount,
-                self._encode_transaction_type(data.transaction_type),
-                data.old_balance,
-                data.new_balance,
-                data.customer_age,
-                self._encode_location(location),
-            ]
-            is_fraud, probability = self.model.predict(features)
-            response = FraudPredictionResponse(
-                is_fraud=is_fraud, probability=probability
-            )
+        features = [
+            data.amount,
+            self._encode_transaction_type(data.transaction_type),
+            data.old_balance,
+            data.new_balance,
+            data.customer_age,
+            self._encode_location(location),
+        ]
+        is_fraud, probability = self.model.predict(features)
+        response = FraudPredictionResponse(is_fraud=is_fraud, probability=probability)
 
-            #  run both notification and logging in parallel
-            await asyncio.gather(
-                self.notify_alert_service(is_fraud, probability),
-                self.notify_log_service(data, is_fraud, probability),
-            )
-            return response
+        #  run both notification and logging in parallel
+        await asyncio.gather(
+            self.notify_alert_service(is_fraud, probability),
+            self.notify_log_service(data, is_fraud, probability),
+        )
+        return response
 
     def _encode_transaction_type(self, type_str: str) -> int:
         mapping = {"transfer": 0, "payment": 1, "withdraw": 2}
@@ -66,7 +64,7 @@ class PredictionService:
         try:
             async with httpx.AsyncClient() as Client:
                 await Client.post(
-                    "http://localhost:8003/alert/",
+                    "http://alert-service:8003/alert/",
                     json={
                         "email": "admin@example.com",
                         "message": f"🚨 Fraudulent transaction detected! is Fraud : {is_fraud}! Probability: {probability:.2f} ",
@@ -89,7 +87,7 @@ class PredictionService:
             }
             async with httpx.AsyncClient() as Client:
                 await Client.post(
-                    "http://localhost:8004/logs/",
+                    "http://log-service:8004/logs/",
                     json=log_data,
                 )
         except Exception as e:

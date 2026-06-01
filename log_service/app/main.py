@@ -5,8 +5,8 @@ import os
 
 app = FastAPI()
 
-BUCKET_NAME = os.getenv("S3_LOG_BUCKET", "your-default-log-bucket")
-log_service = LogService(bucket_name=BUCKET_NAME)
+
+log_service = LogService(bucket_name="bucket_log")
 
 
 @app.on_event("startup")

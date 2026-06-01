@@ -1,7 +1,9 @@
+import os
 from datetime import datetime, timedelta, timezone
 from jose import jwt
 
-SECRET_KEY = "supersecretkey"
+# Defaults to the original key so existing tokens keep working; override via JWT_SECRET_KEY.
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

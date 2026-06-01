@@ -1,32 +1,31 @@
-from app.models import LogEntry
 import logging
-import boto3
-import json
+from typing import List, Optional
+
+from app.models import LogEntry
 
 logger = logging.getLogger("log-service")
 logging.basicConfig(
     level=logging.INFO, format="[%(levelname)s] %(asctime)s - %(message)s"
 )
 
-# Simple in-memory store (can replace with DB later)
-
 
 class LogService:
-    def __init__(self):
-        self.s3 = boto3.client("s3")
-        self.bucket_name = "logs"
+    """Stores structured log entries.
 
-    def save_log(self, loginput: LogEntry):
-        log_data = loginput.model_dump()
-        key = f"logs/{loginput.timestamp.strftime('%Y-%m-%dT%H-%M-%S')}_{loginput.service}.json"
-        self.s3.put_object(
-            Bucket=self.bucket_name,
-            Key=key,
-            Body=json.dumps(log_data),
-            ContentType="application/json",
-        )
-        print(f"[S3 LOG] Saved to {key}")
+    Persistence is in-memory for now (a class-level list shared across instances, since
+    FastAPI builds a fresh LogService per request). To move to S3, provision a bucket and
+    replace the `_store.append` call with an `s3.put_object` write — the original boto3
+    sketch is preserved in git history.
+    """
 
-        # self.logs.append(log)
-        # logger.info(f"{log.service} | {log.event} | {log.message}")
-        # print(f"[LOG] [{log.timestamp}] {log.service}: {log.message}", flush=True)
+    _store: List[LogEntry] = []
+
+    def __init__(self, bucket_name: Optional[str] = None):
+        self.bucket_name = bucket_name
+
+    def save_log(self, loginput: LogEntry) -> None:
+        LogService._store.append(loginput)
+        logger.info("[%s] %s - %s", loginput.service, loginput.event, loginput.message)
+
+    def get_logs(self) -> List[LogEntry]:
+        return list(LogService._store)
